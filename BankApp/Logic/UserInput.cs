@@ -97,5 +97,43 @@ namespace BankApp
 
             return amount;
         }
+
+        public async Task CreateAccount_Info(UserInfo userInfo = null)
+        {
+            var accountOperations = AccountOperations.Instance;
+            var newAccountNumber = new GenerateAccountNumber();
+            var accountCreation = new AccountCreation();
+            string accountType = "";
+
+            if (userInfo != null)
+            {
+                accountType = userInfo.AccountType == "Savings" ? "Current" : "Savings";
+                Console.WriteLine($"Automatically setting new account type to: {accountType}");
+            }
+            else
+            {
+                accountType = accountCreation.DetermineAccountType();
+            }
+
+            (string firstName, string lastName) = accountCreation.GetUserName();
+            string fullName = $"{firstName} {lastName}";
+            string password = accountCreation.GetPassword();
+            decimal accountBalance = 0.0m;
+            string email = accountCreation.GetEmail();
+
+            foreach (var account in accountOperations.newAccount)
+            {
+                UserInfo tempUser = account.Value;
+
+                if (tempUser.Email == email && tempUser.AccountType == accountType)
+                {
+                    Console.WriteLine($"You have already created a {accountType} account!");
+                    break;
+                }
+            }
+
+            string accountNumber = GenerateAccountNumber.GenerateNewAccountNumber();
+            await accountOperations.CreateAccountAsync(fullName, accountNumber, accountBalance, accountType, email, password);
+        }
     }
 }

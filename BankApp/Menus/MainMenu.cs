@@ -41,7 +41,7 @@ namespace BankApp
                 switch (menuSelection)
                 {
                     case "1":
-                        await accountOperations.CreateAccountAsync();
+                        await getUserInput.CreateAccount_Info();
                         break;
 
                     case "2":

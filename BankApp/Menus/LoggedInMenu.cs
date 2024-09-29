@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,6 +31,7 @@ namespace BankApp
             string accountNumber2;
 
             decimal amount;
+            string note = "";
 
 
 
@@ -63,28 +65,33 @@ namespace BankApp
                 switch (menuSelection)
                 {
                     case "1":
-                        await accountOperations.CreateAccountAsync(userInfo);
+                        await getUserInput.CreateAccount_Info(userInfo);
                         break;
 
                     case "2":
                         Console.WriteLine("Please enter amount to deposit");
                         amount = getUserInput.GetAmount();
-                        accountOperations.Deposit(userInfo, amount);
+                        Console.WriteLine("Please enter a note(Press Enter to leave blank");
+                        note = Console.ReadLine()!;
+                        accountOperations.Deposit(userInfo, amount, note);
 
                         break;
 
                     case "3":
                         Console.WriteLine("Please enter amount to withdraw.");
                         amount = getUserInput.GetAmount();
-                        accountOperations.Withdraw(userInfo, amount);
+                        Console.WriteLine("Please enter a note(Press Enter to leave blank");
+                        note = Console.ReadLine()!;
+                        accountOperations.Withdraw(userInfo, amount, note);
                         break;
 
                     case "4":
                         Console.WriteLine("Please enter beneficiary account number and amount.");
                         accountNumber2 = getUserInput.GetAccountNumber("Beneficiary ");
                         amount = getUserInput.GetAmount();
-
-                        accountOperations.Transfer(userInfo, accountNumber2, amount);
+                        Console.WriteLine("Please enter a note(Press Enter to leave blank");
+                        note = Console.ReadLine()!;
+                        accountOperations.Transfer(userInfo, accountNumber2, amount, note);
                         break;
 
                     case "5":
