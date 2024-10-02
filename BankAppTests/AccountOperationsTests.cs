@@ -15,8 +15,6 @@ namespace BankAppTests
             // Create a new instance of AccountOperations before each test
             accountOperations = AccountOperations.Instance;
             accountOperations.newAccount = new Dictionary<string, UserInfo>();
-            
-
         }
 
         [TestMethod]
@@ -52,11 +50,41 @@ namespace BankAppTests
         public async Task CreateAccountAsync_CreatesNewAccount()
         {
             // Act
-            await accountOperations!.CreateAccountAsync("Fortune Ukpata", "12345678901", 0m, "Savings", "fortune@gmail.com", "securepassword");
+            await accountOperations!.CreateAccountAsync("Fortune Ukpata", "12345678901", 0m, "Savings", "fortune@gmail.com", "securepassword$");
 
             // Assert
             Assert.IsTrue(accountOperations.newAccount.ContainsKey("12345678901"));
             Assert.AreEqual("Fortune Ukpata", accountOperations.newAccount["12345678901"].AccountName);
+        }
+
+        [TestMethod]
+        public async Task CreateAccountAsync_InvalidEmail_DoesNotCreate()
+        {
+            // Act
+            await accountOperations!.CreateAccountAsync("Fortune Ukpata", "12345678901", 0m, "Savings", "email", "securepassword$");
+
+            // Assert
+            Assert.IsFalse(accountOperations.newAccount.ContainsKey("12345678901"));
+        }
+
+        [TestMethod]
+        public async Task CreateAccountAsync_InvalidPassword_DoesNotCreate()
+        {
+            // Act
+            await accountOperations!.CreateAccountAsync("Fortune Ukpata", "12345678901", 0m, "Savings", "email@email.com", "badpassword");
+
+            // Assert
+            Assert.IsFalse(accountOperations.newAccount.ContainsKey("12345678901"));
+        }
+
+        [TestMethod]
+        public async Task CreateAccountAsync_InvalidType_DoesNotCreate()
+        {
+            // Act
+            await accountOperations!.CreateAccountAsync("Fortune Ukpata", "12345678901", 0m, "invalidtype", "email@email.com", "badpassword");
+
+            // Assert
+            Assert.IsFalse(accountOperations.newAccount.ContainsKey("12345678901"));
         }
 
         [TestMethod]
@@ -65,6 +93,20 @@ namespace BankAppTests
             // Arrange
             userInfo = new UserInfo("Fortune Ukpata", "12345678901", 0m, "Current", "fortune@gmail.com", "password$");
             decimal depositAmount = 200m;
+
+            // Act
+            accountOperations!.Deposit(userInfo!, depositAmount, note);
+
+            // Assert
+            Assert.AreEqual(200m, userInfo.Balance);
+        }
+
+        [TestMethod]
+        public void Deposit_NegativeAmount_DoesNotDeduct()
+        {
+            // Arrange
+            userInfo = new UserInfo("Fortune Ukpata", "12345678901", 200m, "Current", "fortune@gmail.com", "password$");
+            decimal depositAmount = -200m;
 
             // Act
             accountOperations!.Deposit(userInfo!, depositAmount, note);
@@ -88,7 +130,7 @@ namespace BankAppTests
         }
 
         [TestMethod]
-        public void Withdraw_SavingsInsufficientFunds()
+        public void Withdraw_InsufficientFunds()
         {
             // Arrange
             userInfo = new UserInfo("Fortune Ukpata", "12345678901", 100m, "Savings", "fortune@gmail.com", "password$");
@@ -101,12 +143,28 @@ namespace BankAppTests
             Assert.AreEqual(100m, userInfo.Balance); // No withdrawal should happen
         }
 
+
+        [TestMethod]
+        public void Withdraw_NegativeAmount_NoWithdrawalExpected()
+        {
+            // Arrange
+            userInfo = new UserInfo("Fortune Ukpata", "12345678901", 100m, "Savings", "fortune@gmail.com", "password$");
+            decimal withdrawAmount = -50m;
+
+            // Act
+            accountOperations!.Withdraw(userInfo, withdrawAmount, note);
+
+            // Assert
+            Assert.AreEqual(100m, userInfo.Balance); // No withdrawal should happen
+        }
+
+
         [TestMethod]
         public void Transfer_ValidTransfer_UpdatesBothBalances()
         {
             // Arrange
-            var fromUser = new UserInfo("Fortune Ukpata", "12345678901", 500m, "Savings", "ukpata@gmail.com", "password123");
-            var toUser = new UserInfo("JFortune Fortune", "10987654321", 500m, "Savings", "fortune@gmail.com", "password456");
+            var fromUser = new UserInfo("Fortune Ukpata", "12345678901", 500m, "Savings", "ukpata@gmail.com", "password123$");
+            var toUser = new UserInfo("JFortune Fortune", "10987654321", 500m, "Savings", "fortune@gmail.com", "password456$");
             accountOperations!.newAccount.Add("12345678901", fromUser);
             accountOperations.newAccount.Add("10987654321", toUser);
             decimal transferAmount = 500m;
@@ -117,6 +175,42 @@ namespace BankAppTests
             // Assert
             Assert.AreEqual(0m, fromUser.Balance);
             Assert.AreEqual(1000m, toUser.Balance);
+        }
+
+        [TestMethod]
+        public void Transfer_InsufficientFunds_NothingHappens()
+        {
+            // Arrange
+            var fromUser = new UserInfo("Fortune Ukpata", "12345678901", 500m, "Savings", "ukpata@gmail.com", "password123$");
+            var toUser = new UserInfo("JFortune Fortune", "10987654321", 500m, "Savings", "fortune@gmail.com", "password456$");
+            accountOperations!.newAccount.Add("12345678901", fromUser);
+            accountOperations.newAccount.Add("10987654321", toUser);
+            decimal transferAmount = 600m;
+
+            // Act
+            accountOperations.Transfer(fromUser, "10987654321", transferAmount, note);
+
+            // Assert
+            Assert.AreEqual(500m, fromUser.Balance);
+            Assert.AreEqual(500m, toUser.Balance);
+        }
+
+        [TestMethod]
+        public void Transfer_NegativeAmount_NoTransferOccurs()
+        {
+            // Arrange
+            var fromUser = new UserInfo("Fortune Ukpata", "12345678901", 500m, "Savings", "ukpata@gmail.com", "password123$");
+            var toUser = new UserInfo("JFortune Fortune", "10987654321", 500m, "Savings", "fortune@gmail.com", "password456$");
+            accountOperations!.newAccount.Add("12345678901", fromUser);
+            accountOperations.newAccount.Add("10987654321", toUser);
+            decimal transferAmount = -300m;
+
+            // Act
+            accountOperations.Transfer(fromUser, "10987654321", transferAmount, note);
+
+            // Assert
+            Assert.AreEqual(500m, fromUser.Balance);
+            Assert.AreEqual(500m, toUser.Balance);
         }
 
         [TestMethod]

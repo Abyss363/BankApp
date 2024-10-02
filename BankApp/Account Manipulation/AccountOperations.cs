@@ -52,19 +52,47 @@ namespace BankApp
 
         public async Task CreateAccountAsync(string fullName, string accountNumber, decimal accountBalance, string accountType, string email, string password)
         {
-            newAccount.Add(accountNumber, new UserInfo(fullName, accountNumber, accountBalance, accountType, email, password));
-            await SaveAsync();
-            Console.WriteLine($"Account has been created with the following details: ");
-            Console.WriteLine($"Account Number: {accountNumber} || Account Name: {fullName} || Account Type: {accountType}");
+            AccountOperationChecks checkAccount = new AccountOperationChecks();
+            bool nameChecked, passwordChecked, emailChecked, typeCyhecked, shouldCreate;
+            nameChecked = checkAccount.checkName(fullName);
+            passwordChecked = checkAccount.checkPassword(password);
+            emailChecked = checkAccount.checkEmail(email);
+            typeCyhecked = checkAccount.checkType(accountType);
+            shouldCreate = false;
+
+            if (nameChecked && passwordChecked && emailChecked && typeCyhecked)
+            {
+                shouldCreate = true;
+            }
+            else
+            {
+                Console.WriteLine("Unit testing only. Something is wrong with your input");
+                return;
+            }
+
+            
+            if (shouldCreate)
+            {
+                newAccount.Add(accountNumber, new UserInfo(fullName, accountNumber, accountBalance, accountType, email, password));
+                await SaveAsync();
+                Console.WriteLine($"Account has been created with the following details: ");
+                Console.WriteLine($"Account Number: {accountNumber} || Account Name: {fullName} || Account Type: {accountType}");
+            }
         }
         public void Deposit(UserInfo userInfo, decimal amount, string note)
         {
-            if (userInfo != null)
+            AccountOperationChecks checkDepositAmount = new AccountOperationChecks();
+            bool shouldDeposit = checkDepositAmount.CheckAmount(amount);
+            if (userInfo != null && shouldDeposit)
             {
                 userInfo.Balance += amount;
                 userInfo.TransactionHistory.Add($"| \t{userInfo.AccountName} \t|\t {userInfo.AccountNumber:C} \t|\t {userInfo.AccountType:C} \t|\t {amount} \t|\t Deposit...{note} \t| |--------------------");
 
                 Console.WriteLine($"Deposit successful! New Balance: {userInfo.Balance}");
+            }
+            else
+            {
+                return;
             }
         }
 
@@ -72,6 +100,11 @@ namespace BankApp
         {
             if (userInfo != null)
             {
+                if(amount <= 0)
+                {
+                    Console.WriteLine("You cannot amounts less than or equal to 0");
+                    return;
+                }
                 if (userInfo.AccountType == "Savings")
                 {
                     amount += 1000;
@@ -96,6 +129,11 @@ namespace BankApp
 
         public void Transfer(UserInfo fromUserInfo, string toAccount, decimal amount, string note)
         {
+            if(amount <= 0)
+            {
+                Console.WriteLine("You cannot amounts less than or equal to 0");
+                return;
+            }
             if (fromUserInfo != null && newAccount.ContainsKey(toAccount))
             {
                 if (fromUserInfo.Balance >= amount)
